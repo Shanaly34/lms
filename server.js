@@ -7,6 +7,8 @@ const mysql = require('mysql');
 const { check, validationResult } = require('express-validator');
 const app = express();
 
+app.set('view engine', 'ejs');
+
 // Configure session middleware
 app.use(session({
     secret: 'secret-key',
@@ -125,7 +127,8 @@ app.post('/login', (req, res) => {
                 if (err) throw err;
                 if (isMatch) {
                     // Store user in session
-                    req.session.user = user;
+                    req.session.user = user.full_name;
+                    req.session.user_id = user.id;
                     res.send('Login successful');
                 } else {
                     res.status(401).send('Invalid username or password');
@@ -144,22 +147,82 @@ app.post('/logout', (req, res) => {
 //Dashboard route
 app.get('/dashboard', (req, res) => {
     // Assuming you have middleware to handle user authentication and store user information in req.user
-    const userFullName = req.user.full_name;
+    const userFullName = req.session.user;
     res.render('dashboard', { fullName: userFullName });
 });
+
+//course-content route
+app.get('/course-content', (req, res) => {
+    // Assuming you have middleware to handle user authentication and store user information in req.user
+    const userFullName = req.session.user;
+    res.render('course-content', { fullName: userFullName });
+});
+
+//leader-board route
+app.get('/leaderboard', (req, res) => {
+    // Assuming you have middleware to handle user authentication and store user information in req.user
+    const userFullName = req.session.user;
+    res.render('leader-board', { fullName: userFullName });
+});
+
+// Route to retrieve all course content
+app.get('/courses', (req, res) => {
+    const sql = 'SELECT * FROM courses';
+    connection.query(sql, (err, results) => {
+        if (err) {
+            throw err;
+        }
+        // Send all course content as JSON response
+        res.json(results);
+    });
+});
+
+
+// Route to retrieve my course content
+app.get('/my_courses', (req, res) => {
+    const UserId = req.session.user_id
+
+    const sql = 'SELECT * FROM courses WHERE id IN (SELECT UserId FROM enrollment WHERE UserId = ?)';
+    connection.query(sql, [UserId], (err, results) => {
+        if (err) {
+            throw err;
+        }
+        // Send all course content as JSON response
+        res.json(results);
+    });
+});
+
 
 // Route to retrieve course content
 app.get('/course/:id', (req, res) => {
     const courseId = req.params.id;
-    const sql = 'SELECT * FROM courses WHERE id = ?';
-    db.query(sql, [courseId], (err, result) => {
+    const userId  = req.session.user_id;
+    const sql = "INSERT INTO `enrollments`(`courseId`, `userId`) VALUES (?,?)";
+    connection.query(sql, [courseId, userId], (err, result) => {
       if (err) {
         throw err;
       }
       // Send course content as JSON response
-      res.json(result);
+      res.redirect('../dashboard');
     });
   });
+
+//enroll to course
+app.post('/enroll/:courseId', (req, res) => {
+    const courseId = req.params.courseId;
+    const userId  = req.session.user_id;
+    sql = "INSERT INTO `enrollments`(`courseId`, `userId`) VALUES (?,?)"
+    connection.query(sql, [courseId, userId], (err, result) => {
+        if (err) {
+            throw err;
+        }
+        console.log('Enrolled user in course:', result);
+        res.sendStatus(200);
+    });
+});
+
+
+
 
 // Start server
 const PORT = process.env.PORT || 3000;

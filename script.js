@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (response.ok) {
                 alert('Login successful');
+                // Redirect to another page after successful login
+                window.location.href = '/dashboard'; 
             } else {
                 alert('Invalid username or password');
             }
@@ -198,6 +200,93 @@ function fetchFullName() {
             console.error('Error fetching user full name:', error);
         });
 }
+
+
+
+// Function to fetch course content and populate HTML
+async function fetchAndPopulateCourseContent() {
+    try {
+        // Fetch course content from server
+        const response = await fetch('/courses');
+        const courses = await response.json();
+
+        // Get reference to the course content element
+        const courseContentElement = document.getElementById('courses');
+
+        // Clear existing content
+        courseContentElement.innerHTML = '';
+
+        // Populate HTML with course data
+        courses.forEach(course => {
+            const courseElement = document.createElement('div');
+            courseElement.classList.add('course');
+            courseElement.innerHTML = `
+                
+                <h2> <a href="course/${course.id}">${course.name}</a> </h2>
+            `;
+            courseContentElement.appendChild(courseElement);
+        });
+    } catch (error) {
+        console.error('Error fetching course content:', error);
+    }
+}
+
+// Call the function to fetch and populate course content when the page loads
+document.addEventListener('DOMContentLoaded', fetchAndPopulateCourseContent);
+
+
+// Function to fetch course content and populate HTML
+async function fetchAndPopulatemyCourseContent() {
+    try {
+        // Fetch course content from server
+        const response = await fetch('/my_courses');
+        const courses = await response.json();
+
+        // Get reference to the course content element
+        const courseContentElement = document.getElementById('my_courses');
+
+        // Clear existing content
+        courseContentElement.innerHTML = '';
+
+        // Populate HTML with course data
+        courses.forEach(course => {
+            const courseElement = document.createElement('div');
+            courseElement.classList.add('course');
+            courseElement.innerHTML = `
+                
+                <h2> ${course.name} </h2>
+            `;
+            courseContentElement.appendChild(courseElement);
+        });
+    } catch (error) {
+        console.error('Error fetching course content:', error);
+    }
+}
+
+// Call the function to fetch and populate course content when the page loads
+document.addEventListener('DOMContentLoaded', fetchAndPopulatemyCourseContent);
+
+
+async function enrollInCourse(courseId) {
+    try {
+        // Fetch course enrollment endpoint
+        const response = await fetch(`/enroll/${courseId}`, {
+            method: 'POST',
+            // You may need to include additional headers or authentication tokens here
+        });
+
+        if (response.ok) {
+            console.log('Enrolled in course successfully');
+            // You can optionally update the UI to indicate successful enrollment
+        } else {
+            console.error('Failed to enroll in course');
+            // Handle error (e.g., display an error message to the user)
+        }
+    } catch (error) {
+        console.error('Error enrolling in course:', error);
+    }
+}
+
 
 function displayFullName(fullName) {
     // Get the element where the full name will be displayed
